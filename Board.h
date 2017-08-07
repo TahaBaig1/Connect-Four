@@ -14,6 +14,8 @@ class Board {
 		int getWidth() const;
 		int getHeight() const;
 		sf::CircleShape* getPieces() const;
+		sf::Color getColor1();
+		sf::Color getColor2();
 
 		void drawBoard();
 		Position addPiece(int col, sf::Color color);
@@ -24,6 +26,8 @@ class Board {
 		sf::RenderWindow& window;
 		sf::RectangleShape board;
 		sf::CircleShape* pieces; //1D array holding all the pieces of the board. Will be treated as if it is a 2D array to keep track of piece locations
+		sf::Color pieceColor1;
+		sf::Color pieceColor2;
 
 		//width represents the number of dics allowed horizontally on the board while height represents number of discs allowed vertically
 		int width;

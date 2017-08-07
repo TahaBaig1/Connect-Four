@@ -1,5 +1,4 @@
 #include "Board.h"
-#include <iostream>
 
 Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
 
@@ -21,13 +20,16 @@ Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window
 	//Setting up game board graphics to be drawn on window later
 	//Board will occupy full height/width of the window with the exception of slight area above the board used for displaying other information
 	board.setSize(sf::Vector2f(window.getSize().x, window.getSize().y - 3 * pieceRadius));
-	board.setFillColor(sf::Color::Yellow);
+	board.setFillColor(sf::Color(71,133,228));
 	board.setPosition(0, 3 * pieceRadius);
 
 	numInColumns = new int[width];
 	for(int i = 0; i < width; i++){
 		numInColumns[i] = 0;
 	}
+
+	pieceColor1 = sf::Color::Red;
+	pieceColor2 = sf::Color::Yellow;
 }
 
 Board::~Board() {
@@ -45,6 +47,14 @@ int Board::getHeight() const {
 
 sf::CircleShape * Board::getPieces() const {
 	return pieces;
+}
+
+sf::Color Board::getColor1() {
+	return pieceColor1;
+}
+
+sf::Color Board::getColor2() {
+	return pieceColor2;
 }
 
 void Board::drawBoard() {
@@ -80,10 +90,12 @@ Position Board::addPiece(int col, sf::Color color) {
 	return p;
 }
 
+//Converts 2D dimenions into 1D dimensions
 int Board::index(Position p) {
 	return p.y * width + p.x;
 }
 
+//Checks whether 2D dimensions are valid on board
 bool Board::validPosition(Position p) {
 	return (p.x >= 0 && p.x < width) && (p.y >= 0 && p.y < height);
 }
