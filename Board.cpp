@@ -1,5 +1,6 @@
 #include "Board.h"
 
+
 Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
 
 	//Setting up piece graphics to be drawn on window later
@@ -81,7 +82,7 @@ void Board::drawBoard() {
 
 //Adds piece of specified color to specified column of board, increments numInColumns, and returns Position filled
 //If specified column of board is already filled, returns Position(-1,-1), does not increment numInColumns
-Position Board::addPiece(int col, sf::Color color) {
+Position Board::addPiece(int col, sf::Color& color) {
 	int numInCol = numInColumns[col];
 	if (numInCol == height) return Position(-1, -1);
 	Position p(col, height - numInCol - 1);
@@ -91,12 +92,12 @@ Position Board::addPiece(int col, sf::Color color) {
 }
 
 //Converts 2D dimenions into 1D dimensions
-int Board::index(Position p) {
+int Board::index(Position& p) {
 	return p.y * width + p.x;
 }
 
 //Checks whether 2D dimensions are valid on board
-bool Board::validPosition(Position p) {
+bool Board::validPosition(Position& p) {
 	return (p.x >= 0 && p.x < width) && (p.y >= 0 && p.y < height);
 }
 

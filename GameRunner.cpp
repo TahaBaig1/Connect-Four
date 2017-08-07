@@ -1,7 +1,10 @@
 #include "Game.h"
 
 int main() {
-	Game game;
-	game.run();
+	bool playGame = true;
+	while (playGame) {
+		Game game;
+		playGame = game.run();
+	}
 	return 0;
 }

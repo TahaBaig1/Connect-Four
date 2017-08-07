@@ -18,9 +18,9 @@ class Board {
 		sf::Color getColor2();
 
 		void drawBoard();
-		Position addPiece(int col, sf::Color color);
-	    int index(Position p);
-		bool validPosition(Position p);
+		Position addPiece(int col, sf::Color& color);
+	    int index(Position& p);
+		bool validPosition(Position& p);
 	private:
 		//graphics for game board and game pieces
 		sf::RenderWindow& window;
