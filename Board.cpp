@@ -1,8 +1,7 @@
 #include "Board.h"
 #include <iostream>
 
-Board::Board(int width_, int height_) : width(width_), height(height_) {
-	window.create(sf::VideoMode(700, 700), "Connect Four", sf::Style::Close);
+Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
 
 	//Setting up piece graphics to be drawn on window later
 	//Pieces are circular disks of a fixed radius 1/(width * window pixel width) 
@@ -48,28 +47,24 @@ sf::CircleShape * Board::getPieces() const {
 	return pieces;
 }
 
-sf::RenderWindow& Board::getWindow() {
-	return window;
-}
-
 void Board::drawBoard() {
 	window.draw(board);
 
 	//Drawing discs on board based on pieces array
 	//Center of discs on the board are 1.5 times their radius away from the edges of the board and 3 times their radius away from each other
-	float holeRadius = pieces[0].getRadius();
-	float currentX = board.getPosition().x + 1.5*holeRadius;
-	float currentY = board.getPosition().y + 1.5*holeRadius;
+	float pieceRadius = pieces[0].getRadius();
+	float currentX = board.getPosition().x + 1.5*pieceRadius;
+	float currentY = board.getPosition().y + 1.5*pieceRadius;
 	for (int i = 0; i < height; i++) {
 		pieces[index(Position(0,i))].setPosition(currentX, currentY);
 		window.draw(pieces[index(Position(0,i))]);
 		for (int j = 1; j < width; j++) {
-			currentX += 3 * holeRadius;
+			currentX += 3 * pieceRadius;
 			pieces[index(Position(j, i))].setPosition(currentX, currentY);
 			window.draw(pieces[index(Position(j, i))]);
 		}
-		currentY += 3 * holeRadius;
-		currentX = board.getPosition().x + 1.5*holeRadius;
+		currentY += 3 * pieceRadius;
+		currentX = board.getPosition().x + 1.5*pieceRadius;
 	}
 }
 
