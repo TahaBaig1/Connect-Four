@@ -3,7 +3,7 @@
 Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
 
 	//Setting up piece graphics to be drawn on window later
-	//Pieces are circular disks of a fixed radius 1/(width * window pixel width) 
+	//Pieces are circular disks of a fixed radius window (1/3) * [pixel width/(number of columns (width) )] 
 	//By default they are set to the color black to represent no piece currently occupying that position on the board
 	float pieceRadius = window.getSize().x / width / 3;
 	pieces = new sf::CircleShape[width*height];
