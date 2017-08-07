@@ -21,6 +21,7 @@ class Board {
 		Position addPiece(int col, sf::Color& color);
 	    int index(Position& p);
 		bool validPosition(Position& p);
+		void clear();
 	private:
 		//graphics for game board and game pieces
 		sf::RenderWindow& window;

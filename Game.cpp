@@ -1,10 +1,10 @@
 #include "Game.h"
 #include <iostream>
 
-Game::Game(int numConnected_, int turn_) : numConnected(numConnected_), 
+Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnected(numConnected_), 
 										   turn(turn_), 
-										   window(sf::VideoMode(850, 850), "Connect Four", sf::Style::Close),
-										   board(window)
+										   window(window_),
+										   board(window_)
 {
 	//setting up graphics for game marker
 	float markerRadius = window.getSize().x / board.getWidth() / 3;
@@ -13,51 +13,39 @@ Game::Game(int numConnected_, int turn_) : numConnected(numConnected_),
 }
 
 //game loop
-//returns true/false depending on if players wishes to play again
-bool Game::run() {
-	Status gameStatus = CONTINUE;
+void Game::run() {
+	bool playGame = true;
 
-	//Playing game
-	while (window.isOpen() && gameStatus == CONTINUE) {
-		sf::Event event;
-		while (window.pollEvent(event)) {
-			if (event.type == sf::Event::Closed) window.close();
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) window.close();
-			if (event.type == sf::Event::MouseButtonPressed) {
-				int col = convertPixelsToColumn(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
-				if (col == -1)  break;
-				Position placed = board.addPiece(col, getCurrentColor());
-				if (placed.x == -1 || placed.y == -1) break;
-				gameStatus = checkWon(placed);
-				if(gameStatus == CONTINUE) turn++;
+	//as long as player wants to continue playing game, reset game and keep running
+	while (playGame) {
+		Status gameStatus = CONTINUE;
+
+		//Playing game
+		while (window.isOpen() && gameStatus == CONTINUE) {
+			sf::Event event;
+			while (window.pollEvent(event)) {
+				if (event.type == sf::Event::Closed) window.close();
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) window.close();
+				if (event.type == sf::Event::MouseButtonPressed) {
+					int col = convertPixelsToColumn(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+					if (col == -1)  break;
+					Position placed = board.addPiece(col, getCurrentColor());
+					if (placed.x == -1 || placed.y == -1) break;
+					gameStatus = checkWon(placed);
+					if (gameStatus == CONTINUE) turn++;
+				}
 			}
-		}
-		window.clear();
+			window.clear();
 
-		board.drawBoard();
-		int currentCol = convertPixelsToColumn(sf::Mouse::getPosition(window));
-		if(currentCol != -1) drawMarker(currentCol);
-		window.display();
-	}
-
-	//Displaying end game text when game is over
-	while (window.isOpen()) {
-		sf::Event event;
-		while (window.pollEvent(event)) {
-			if (event.type == sf::Event::Closed) window.close();
-			if (event.type = sf::Event::KeyPressed) {
-				if (event.key.code == sf::Keyboard::Escape) window.close();
-				if (event.key.code == sf::Keyboard::Return)  return true;
-			}
+			board.drawBoard();
+			int currentCol = convertPixelsToColumn(sf::Mouse::getPosition(window));
+			if (currentCol != -1) drawMarker(currentCol);
+			window.display();
 		}
 
-		window.clear();
-		board.drawBoard();
-		drawEndText(gameStatus);
-		window.display();
+		playGame = endLoop(gameStatus); //Displaying end game text when game is over and returning whether player wants to play again or exit
+		if (playGame) reset();	//If player does want to play again, reset game information
 	}
-
-	return false;
 }
 
 sf::Color Game::getCurrentColor() {
@@ -160,6 +148,7 @@ int Game::convertPixelsToColumn(sf::Vector2i& pos) {
 	return (int) pos.x / columnLength;
 }
 
+//displays marker indicating which color is currently making a move above column user mouse is currently hovering over
 void Game::drawMarker(int col) {
 	marker.setFillColor(getCurrentColor());
 
@@ -173,10 +162,32 @@ void Game::animateDrop(Position& placed) {
 
 }
 
-void Game::setEndText(sf::Text& text, sf::Color color) {
-	sf::Font font;
-	font.loadFromFile("fonts/Cousine-Regular.ttf");
+bool Game::endLoop(Status gameStatus) {
+	while (window.isOpen()) {
+		sf::Event event;
+		while (window.pollEvent(event)) {
+			if (event.type == sf::Event::Closed) window.close();
+			if (event.type = sf::Event::KeyPressed) {
+				if (event.key.code == sf::Keyboard::Escape) window.close();
+				if (event.key.code == sf::Keyboard::Return)  return true;
+			}
+		}
 
+		window.clear();
+		board.drawBoard();
+		drawEndText(gameStatus);
+		window.display();
+	}
+
+	return false;
+}
+
+void Game::reset() {
+	turn = 1;
+	board.clear();
+}
+
+void Game::setEndText(sf::Text& text, sf::Font& font, sf::Color color) {
 	text.setFont(font);
 	text.setFillColor(color);
 	text.setCharacterSize(24);
@@ -200,27 +211,15 @@ void Game::drawEndText(Status gameStatus) {
 		else                                     winnerText.setString("Game over");
 	}
 
-	//setEndText(winnerText, displayColor);
-	//setEndText(instructions, displayColor);
-
 	sf::Font font;
 	font.loadFromFile("fonts/Cousine-Regular.ttf");
 
-	winnerText.setFont(font);
-	winnerText.setFillColor(displayColor);
-	winnerText.setCharacterSize(24);
-	sf::FloatRect f = winnerText.getLocalBounds();
-	winnerText.setOrigin(f.width / 2, 0);
-
+	setEndText(winnerText, font, displayColor);
 	winnerText.setPosition(window.getSize().x / 2, 0);
 	window.draw(winnerText);
 
-	instructions.setFont(font);
 	instructions.setString("Press Enter to Play Again or Escape to Quit");
-	instructions.setFillColor(displayColor);
-	instructions.setCharacterSize(24);
-	sf::FloatRect f2 = instructions.getLocalBounds();
-	instructions.setOrigin(f2.width / 2, 0);
-	instructions.setPosition(window.getSize().x / 2, winnerText.getLocalBounds().height + 10);
+	setEndText(instructions, font, displayColor);
+	instructions.setPosition(window.getSize().x / 2, winnerText.getLocalBounds().height + window.getSize().y / 100);
 	window.draw(instructions);
 }

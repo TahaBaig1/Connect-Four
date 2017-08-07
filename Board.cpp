@@ -101,3 +101,15 @@ bool Board::validPosition(Position& p) {
 	return (p.x >= 0 && p.x < width) && (p.y >= 0 && p.y < height);
 }
 
+void Board::clear() {
+	//resetting all discs on board
+	for (int i = 0; i < width*height; i++) {
+		pieces[i].setFillColor(sf::Color::Black);
+	}
+
+	//setting number in all columns to zero
+	for (int i = 0; i < width; i++) {
+		numInColumns[i] = 0;
+	}
+}
+
