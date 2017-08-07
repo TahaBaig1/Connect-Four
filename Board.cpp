@@ -77,6 +77,7 @@ void Board::drawBoard() {
 		currentY += 3 * pieceRadius;
 		currentX = board.getPosition().x + 1.5*pieceRadius;
 	}
+
 }
 
 

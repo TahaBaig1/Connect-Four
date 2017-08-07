@@ -2,9 +2,9 @@
 #include <iostream>
 
 Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnected(numConnected_), 
-										   turn(turn_), 
-										   window(window_),
-										   board(window_)
+																	  turn(turn_), 
+																	  window(window_),
+																	  board(window_)
 {
 	//setting up graphics for game marker
 	float markerRadius = window.getSize().x / board.getWidth() / 3;
@@ -31,6 +31,7 @@ void Game::run() {
 					if (col == -1)  break;
 					Position placed = board.addPiece(col, getCurrentColor());
 					if (placed.x == -1 || placed.y == -1) break;
+					animateDrop(placed);
 					gameStatus = checkWon(placed);
 					if (gameStatus == CONTINUE) turn++;
 				}
@@ -159,6 +160,28 @@ void Game::drawMarker(int col) {
 }
 
 void Game::animateDrop(Position& placed) {
+	float velocity = 3; //pixels per millisecond
+	sf::Clock clock;
+	
+	float yCurrent = marker.getPosition().y;
+	float yFinal = 1.5 * marker.getRadius() + (placed.y + 1) * 3 * marker.getRadius();
+
+	sf::CircleShape tempBlocker(marker.getRadius());
+	tempBlocker.setFillColor(sf::Color::Black);
+	tempBlocker.setOrigin(tempBlocker.getRadius(), tempBlocker.getRadius());
+	tempBlocker.setPosition(marker.getPosition().x, yFinal);
+
+	while (yCurrent < yFinal) {
+		marker.setPosition(marker.getPosition().x, yCurrent);
+		window.clear();
+		board.drawBoard();
+		window.draw(tempBlocker);
+		window.draw(marker);
+		window.display();
+
+		yCurrent += velocity * clock.getElapsedTime().asMilliseconds();
+		clock.restart();
+	}
 
 }
 
