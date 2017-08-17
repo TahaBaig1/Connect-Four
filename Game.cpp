@@ -1,5 +1,4 @@
 #include "Game.h"
-#include <iostream>
 
 Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnected(numConnected_), 
 																	  turn(turn_), 
@@ -21,25 +20,27 @@ void Game::run() {
 		Status gameStatus = CONTINUE;
 
 		//Playing game
-		while (window.isOpen() && gameStatus == CONTINUE) {
+		while (window.isOpen()) {
 			sf::Event event;
 			while (window.pollEvent(event)) {
 				if (event.type == sf::Event::Closed) window.close();
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) window.close();
 				if (event.type == sf::Event::MouseButtonPressed) {
-					int col = convertPixelsToColumn(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+					int col = convertMousePosToColumn(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
 					if (col == -1)  break;
 					Position placed = board.addPiece(col, getCurrentColor());
 					if (placed.x == -1 || placed.y == -1) break;
 					animateDrop(placed);
-					gameStatus = checkWon(placed);
-					if (gameStatus == CONTINUE) turn++;
+					gameStatus = isGameOver(placed);
+					if (gameStatus != CONTINUE) break;
+				    turn++;
 				}
 			}
-			window.clear();
-
+			if (gameStatus != CONTINUE) break;
+			
+			window.clear(board.getBackgroundColor());
 			board.drawBoard();
-			int currentCol = convertPixelsToColumn(sf::Mouse::getPosition(window));
+			int currentCol = convertMousePosToColumn(sf::Mouse::getPosition(window));
 			if (currentCol != -1) drawMarker(currentCol);
 			window.display();
 		}
@@ -49,14 +50,14 @@ void Game::run() {
 	}
 }
 
-sf::Color Game::getCurrentColor() {
+sf::Color Game::getCurrentColor() const{
 	if (turn % 2 == 0) return board.getColor1();
 	else               return board.getColor2();
 }
 
-//checks game board and returns curren game status (CONTINUE, TIE, WIN)
+//checks game board and returns current game status (CONTINUE, TIE, WIN)
 //works via passing in last position where a piece was dropped and searching horizontally, vertically, and diagonally from piece to find connections
-Status Game::checkWon(Position& placed) {
+Status Game::isGameOver(Position& placed) const{
 	if (turn < numConnected) return CONTINUE; //if not enough pieces have been put on the board for a connection, then continue game
 	if (turn == board.getWidth() * board.getHeight()) return TIE; //if entire board is filled with no winner, game is tied
      
@@ -141,7 +142,7 @@ Status Game::checkWon(Position& placed) {
 
 //Return the column the mouse is hovering over given the mouse's location in pixels
 //If mouse is outside the boundaries of the screen, return -1
-int Game::convertPixelsToColumn(sf::Vector2i& pos) {
+int Game::convertMousePosToColumn(sf::Vector2i& pos) const{
 	if (pos.x < 0 || pos.x > window.getSize().x || pos.y < 0 || pos.y > window.getSize().y) return -1;
 	int numColumns = board.getWidth();
 	float columnLength = window.getSize().x / numColumns;
@@ -160,20 +161,20 @@ void Game::drawMarker(int col) {
 }
 
 void Game::animateDrop(Position& placed) {
-	float velocity = 3; //pixels per millisecond
+	const float velocity = 3; //pixels per millisecond
 	sf::Clock clock;
 	
 	float yCurrent = marker.getPosition().y;
 	float yFinal = 1.5 * marker.getRadius() + (placed.y + 1) * 3 * marker.getRadius();
-
+	float xPos = 1.5 * marker.getRadius() + (placed.x) * 3 * marker.getRadius();
 	sf::CircleShape tempBlocker(marker.getRadius());
-	tempBlocker.setFillColor(sf::Color::Black);
+	tempBlocker.setFillColor(board.getBackgroundColor());
 	tempBlocker.setOrigin(tempBlocker.getRadius(), tempBlocker.getRadius());
-	tempBlocker.setPosition(marker.getPosition().x, yFinal);
+	tempBlocker.setPosition(xPos, yFinal);
 
 	while (yCurrent < yFinal) {
-		marker.setPosition(marker.getPosition().x, yCurrent);
-		window.clear();
+		marker.setPosition(xPos, yCurrent);
+		window.clear(board.getBackgroundColor());
 		board.drawBoard();
 		window.draw(tempBlocker);
 		window.draw(marker);
@@ -196,7 +197,7 @@ bool Game::endLoop(Status gameStatus) {
 			}
 		}
 
-		window.clear();
+		window.clear(board.getBackgroundColor());
 		board.drawBoard();
 		drawEndText(gameStatus);
 		window.display();
@@ -210,7 +211,7 @@ void Game::reset() {
 	board.clear();
 }
 
-void Game::setEndText(sf::Text& text, sf::Font& font, sf::Color color) {
+void Game::setEndText(sf::Text& text, sf::Font& font, sf::Color& color) {
 	text.setFont(font);
 	text.setFillColor(color);
 	text.setCharacterSize(24);
@@ -229,9 +230,9 @@ void Game::drawEndText(Status gameStatus) {
 	}
 	else {
 		displayColor = getCurrentColor();
-		if (displayColor == sf::Color::Yellow)   winnerText.setString("Yellow Wins!");
-		else if (displayColor == sf::Color::Red) winnerText.setString("Red wins!");
-		else                                     winnerText.setString("Game over");
+		if (displayColor == board.getColor1())      winnerText.setString("Red Wins!");
+		else if (displayColor == board.getColor2()) winnerText.setString("Yellow wins!");
+		else                                        winnerText.setString("Game over");
 	}
 
 	sf::Font font;

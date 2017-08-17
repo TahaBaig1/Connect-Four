@@ -5,4 +5,5 @@ int main() {
 	window.setFramerateLimit(15);
 	Game game(window);
 	game.run();
+	return 0;
 }

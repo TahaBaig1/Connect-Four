@@ -19,15 +19,15 @@ class Game {
 		Board board;
 		sf::CircleShape marker;
 
-		sf::Color getCurrentColor();
-		Status checkWon(Position& placed);
-		int convertPixelsToColumn(sf::Vector2i& pos);
+		sf::Color getCurrentColor() const;
+		Status isGameOver(Position& placed) const;
+		int convertMousePosToColumn(sf::Vector2i& pos) const;
 		void drawMarker(int col);
 		void animateDrop(Position& placed);
 		bool endLoop(Status gameStatus);
-		void reset();
-		void setEndText(sf::Text& text,sf::Font& font, sf::Color color);
+		void setEndText(sf::Text& text, sf::Font& font, sf::Color& color);
 		void drawEndText(Status gameStatus);
+		void reset();
 };
 
 #endif

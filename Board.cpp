@@ -2,18 +2,24 @@
 
 
 Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
-
 	//Setting up piece graphics to be drawn on window later
 	//Pieces are circular disks of a fixed radius window (1/3) * [pixel width/(number of columns (width) )] 
-	//By default they are set to the color black to represent no piece currently occupying that position on the board
+	//By default they are set to the background color to represent no piece currently occupying that position on the board
+	pieceColor1 = sf::Color::Red;
+	pieceColor2 = sf::Color::Yellow;
+	backgroundColor = sf::Color::Color(170, 196, 239);
+	sf::Color borderColor(2, 37, 94);
+
 	float pieceRadius = window.getSize().x / width / 3;
 	pieces = new sf::CircleShape[width*height];
 
 	for (int row = 0; row < width; row++) {
 		for (int col = 0; col < height; col++) {
 			sf::CircleShape piece(pieceRadius);
-			piece.setFillColor(sf::Color::Black);
+			piece.setFillColor(backgroundColor);
 			piece.setOrigin(pieceRadius, pieceRadius);
+			piece.setOutlineThickness(5);
+			piece.setOutlineColor(borderColor);
 			pieces[index(Position(row, col))] = piece;
 		} 
 	}
@@ -29,8 +35,6 @@ Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window
 		numInColumns[i] = 0;
 	}
 
-	pieceColor1 = sf::Color::Red;
-	pieceColor2 = sf::Color::Yellow;
 }
 
 Board::~Board() {
@@ -50,13 +54,18 @@ sf::CircleShape * Board::getPieces() const {
 	return pieces;
 }
 
-sf::Color Board::getColor1() {
+sf::Color Board::getColor1() const{
 	return pieceColor1;
 }
 
-sf::Color Board::getColor2() {
+sf::Color Board::getColor2() const{
 	return pieceColor2;
 }
+
+sf::Color Board::getBackgroundColor() const {
+	return backgroundColor;
+}
+
 
 void Board::drawBoard() {
 	window.draw(board);
@@ -67,8 +76,8 @@ void Board::drawBoard() {
 	float currentX = board.getPosition().x + 1.5*pieceRadius;
 	float currentY = board.getPosition().y + 1.5*pieceRadius;
 	for (int i = 0; i < height; i++) {
-		pieces[index(Position(0,i))].setPosition(currentX, currentY);
-		window.draw(pieces[index(Position(0,i))]);
+		pieces[index(Position(0, i))].setPosition(currentX, currentY);
+		window.draw(pieces[index(Position(0, i))]);
 		for (int j = 1; j < width; j++) {
 			currentX += 3 * pieceRadius;
 			pieces[index(Position(j, i))].setPosition(currentX, currentY);
@@ -77,7 +86,6 @@ void Board::drawBoard() {
 		currentY += 3 * pieceRadius;
 		currentX = board.getPosition().x + 1.5*pieceRadius;
 	}
-
 }
 
 
@@ -93,19 +101,19 @@ Position Board::addPiece(int col, sf::Color& color) {
 }
 
 //Converts 2D dimenions into 1D dimensions
-int Board::index(Position& p) {
+int Board::index(Position& p) const{
 	return p.y * width + p.x;
 }
 
 //Checks whether 2D dimensions are valid on board
-bool Board::validPosition(Position& p) {
+bool Board::validPosition(Position& p) const{
 	return (p.x >= 0 && p.x < width) && (p.y >= 0 && p.y < height);
 }
 
 void Board::clear() {
 	//resetting all discs on board
 	for (int i = 0; i < width*height; i++) {
-		pieces[i].setFillColor(sf::Color::Black);
+		pieces[i].setFillColor(backgroundColor);
 	}
 
 	//setting number in all columns to zero
