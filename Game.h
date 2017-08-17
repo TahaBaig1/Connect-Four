@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <SFML/Audio.hpp>
 #include "Board.h"
 
 enum Status {
@@ -18,6 +19,10 @@ class Game {
 		sf::RenderWindow& window;
 		Board board;
 		sf::CircleShape marker;
+
+		//for sound that plays when piece is dropped on board
+		sf::SoundBuffer buffer;
+		sf::Sound dropSound;
 
 		sf::Color getCurrentColor() const;
 		Status isGameOver(Position& placed) const;

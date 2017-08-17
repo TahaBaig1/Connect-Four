@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <SFML/Audio.hpp>
 
 Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnected(numConnected_), 
 																	  turn(turn_), 
@@ -9,6 +10,9 @@ Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnect
 	float markerRadius = window.getSize().x / board.getWidth() / 3;
 	marker.setRadius(markerRadius);
 	marker.setOrigin(markerRadius, markerRadius);
+
+	buffer.loadFromFile("sounds/drop.wav");
+	dropSound.setBuffer(buffer);
 }
 
 //game loop
@@ -26,11 +30,17 @@ void Game::run() {
 				if (event.type == sf::Event::Closed) window.close();
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) window.close();
 				if (event.type == sf::Event::MouseButtonPressed) {
+					//get column and position on boad where piece will be dropped
 					int col = convertMousePosToColumn(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
 					if (col == -1)  break;
 					Position placed = board.addPiece(col, getCurrentColor());
 					if (placed.x == -1 || placed.y == -1) break;
+
+					//animate dropping and play sound effect at end
 					animateDrop(placed);
+					dropSound.play();
+
+					//determine whether game has ended; if not, increment the turn number
 					gameStatus = isGameOver(placed);
 					if (gameStatus != CONTINUE) break;
 				    turn++;
@@ -38,6 +48,7 @@ void Game::run() {
 			}
 			if (gameStatus != CONTINUE) break;
 			
+			//draw board and board marker hovering over column user is currently mousing over
 			window.clear(board.getBackgroundColor());
 			board.drawBoard();
 			int currentCol = convertMousePosToColumn(sf::Mouse::getPosition(window));
