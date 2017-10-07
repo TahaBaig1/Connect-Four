@@ -5,7 +5,7 @@
 #include "Board.h"
 
 enum Status {
-	CONTINUE,TIE,WIN
+	CONTINUE,TIE,WIN,PLAYER_V_PLAYER,AI_FIRST,AI_SECOND
 };
 
 //contains game loop and all game components/logic
@@ -24,13 +24,14 @@ class Game {
 		sf::SoundBuffer buffer;
 		sf::Sound dropSound;
 
+		Status displayTitleScreen() const;
 		sf::Color getCurrentColor() const;
 		Status isGameOver(Position& placed) const;
 		int convertMousePosToColumn(sf::Vector2i& pos) const;
 		void drawMarker(int col);
 		void animateDrop(Position& placed);
 		bool endLoop(Status gameStatus);
-		void setEndText(sf::Text& text, sf::Font& font, sf::Color& color);
+		void setText(sf::Text& text, sf::Font& font, sf::Color& color, int charSize) const;
 		void drawEndText(Status gameStatus);
 		void reset();
 };

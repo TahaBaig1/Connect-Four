@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <SFML/Audio.hpp>
+#include <iostream>
 
 Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnected(numConnected_), 
 																	  turn(turn_), 
@@ -7,10 +8,11 @@ Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnect
 																	  board(window_)
 {
 	//setting up graphics for game marker
-	float markerRadius = window.getSize().x / board.getWidth() / 3;
+	float markerRadius = board.getPieces()[0].getRadius();
 	marker.setRadius(markerRadius);
 	marker.setOrigin(markerRadius, markerRadius);
 
+	//setting up sound effects
 	buffer.loadFromFile("sounds/drop.wav");
 	dropSound.setBuffer(buffer);
 }
@@ -18,9 +20,9 @@ Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnect
 //game loop
 void Game::run() {
 	bool playGame = true;
-
 	//as long as player wants to continue playing game, reset game and keep running
 	while (playGame) {
+		displayTitleScreen();
 		Status gameStatus = CONTINUE;
 
 		//Playing game
@@ -59,6 +61,65 @@ void Game::run() {
 		playGame = endLoop(gameStatus); //Displaying end game text when game is over and returning whether player wants to play again or exit
 		if (playGame) reset();	//If player does want to play again, reset game information
 	}
+}
+
+//generates title screen loop and determines if player wishes to play against another player or an AI 
+Status Game::displayTitleScreen() const{
+	//generate title display text
+	window.clear(board.getBackgroundColor());
+
+	sf::Font font;
+	font.loadFromFile("fonts/Cousine-Regular.ttf");
+
+	sf::Text title, gameMode1, gameMode2, gameMode3;
+	title.setString("CONNECT FOUR");
+	gameMode1.setString("1. Player vs Player Game");
+	gameMode2.setString("2. Player vs Computer (Computer moves first)");
+	gameMode3.setString("3. Player vs Computer (Computer moves second)");
+
+	sf::Color titleTextColor(sf::Color::Red);
+	sf::Color gameModesColor(sf::Color::Black);
+
+	setText(title, font, titleTextColor, 48);
+	title.setPosition(window.getSize().x / 2, 20);
+	window.draw(title);
+	setText(gameMode1, font, gameModesColor, 24);
+	gameMode1.setPosition(window.getSize().x/2, window.getSize().y / 3);
+	window.draw(gameMode1);
+	setText(gameMode2, font, gameModesColor, 24);
+	gameMode2.setPosition(window.getSize().x/2, window.getSize().y / 3  + 2*gameMode1.getLocalBounds().height);
+	window.draw(gameMode2);
+	setText(gameMode3, font, gameModesColor, 24);
+	gameMode3.setPosition(window.getSize().x/2, window.getSize().y / 3 + 4*gameMode1.getLocalBounds().height);
+	window.draw(gameMode3);
+
+	window.display();
+
+	//loop until player decies on a game mode
+	while (window.isOpen()) {
+		sf::Event event;
+		while (window.pollEvent(event)) {
+			if (event.type == sf::Event::Closed) window.close();
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) window.close();
+			if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::Num1 || event.key.code == sf::Keyboard::Numpad1)) {
+				window.clear();
+				return PLAYER_V_PLAYER;
+			}
+			if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::Num2 || event.key.code == sf::Keyboard::Numpad2)) {
+				window.clear();
+				return AI_FIRST;
+			}
+			if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::Num3 || event.key.code == sf::Keyboard::Numpad3)) {
+				window.clear();
+				return AI_SECOND;
+			}
+
+		}
+	}
+	
+	//should never get here
+	window.clear();
+	return PLAYER_V_PLAYER;
 }
 
 sf::Color Game::getCurrentColor() const{
@@ -222,10 +283,10 @@ void Game::reset() {
 	board.clear();
 }
 
-void Game::setEndText(sf::Text& text, sf::Font& font, sf::Color& color) {
+void Game::setText(sf::Text& text, sf::Font& font, sf::Color& color, int charSize) const{
 	text.setFont(font);
 	text.setFillColor(color);
-	text.setCharacterSize(24);
+	text.setCharacterSize(charSize);
 	sf::FloatRect f = text.getLocalBounds();
 	text.setOrigin(f.width / 2, 0);
 }
@@ -249,12 +310,12 @@ void Game::drawEndText(Status gameStatus) {
 	sf::Font font;
 	font.loadFromFile("fonts/Cousine-Regular.ttf");
 
-	setEndText(winnerText, font, displayColor);
+	setText(winnerText, font, displayColor, 24);
 	winnerText.setPosition(window.getSize().x / 2, 0);
 	window.draw(winnerText);
 
 	instructions.setString("Press Enter to Play Again or Escape to Quit");
-	setEndText(instructions, font, displayColor);
+	setText(instructions, font, displayColor, 24);
 	instructions.setPosition(window.getSize().x / 2, winnerText.getLocalBounds().height + window.getSize().y / 100);
 	window.draw(instructions);
 }
