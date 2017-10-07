@@ -20,7 +20,7 @@ class Board {
 
 		void drawBoard();
 
-		Position addPiece(int col, sf::Color& color);
+		Position addPiece(int col, const sf::Color& color);
 	    int index(Position& p) const;
 		bool validPosition(Position& p) const;
 		void clear();

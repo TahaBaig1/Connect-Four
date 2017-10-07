@@ -1,6 +1,6 @@
 #include "Game.h"
 #include <SFML/Audio.hpp>
-#include <iostream>
+#include "ComputerPlayer.h"
 
 Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnected(numConnected_), 
 																	  turn(turn_), 
@@ -22,8 +22,20 @@ void Game::run() {
 	bool playGame = true;
 	//as long as player wants to continue playing game, reset game and keep running
 	while (playGame) {
-		displayTitleScreen();
+		Status gameMode = displayTitleScreen();
 		Status gameStatus = CONTINUE;
+		ComputerPlayer ai;
+		
+		if (gameMode == AI_FIRST) {
+			ai.setColor(board.getColor1());
+			Position placed = ai.makeMove(board);
+			drawMarker(placed.x);
+			animateDrop(placed);
+			dropSound.play();
+			turn++;
+		} else if (gameMode == AI_SECOND) {
+			ai.setColor(board.getColor2());
+		}
 
 		//Playing game
 		while (window.isOpen()) {
@@ -42,10 +54,25 @@ void Game::run() {
 					animateDrop(placed);
 					dropSound.play();
 
+					window.clear(board.getBackgroundColor());
+					board.drawBoard();
+					window.display();
+
 					//determine whether game has ended; if not, increment the turn number
 					gameStatus = isGameOver(placed);
 					if (gameStatus != CONTINUE) break;
 				    turn++;
+
+					if (gameMode == AI_FIRST || gameMode == AI_SECOND) {
+						sf::sleep(sf::milliseconds(250));
+						Position placed = ai.makeMove(board);
+						drawMarker(placed.x);
+						animateDrop(placed);
+						dropSound.play();
+						gameStatus = isGameOver(placed);
+						if (gameStatus != CONTINUE) break;
+						turn++;
+					}
 				}
 			}
 			if (gameStatus != CONTINUE) break;
@@ -81,7 +108,7 @@ Status Game::displayTitleScreen() const{
 	sf::Color gameModesColor(sf::Color::Black);
 
 	setText(title, font, titleTextColor, 48);
-	title.setPosition(window.getSize().x / 2, 20);
+	title.setPosition(window.getSize().x / 2, 0);
 	window.draw(title);
 	setText(gameMode1, font, gameModesColor, 24);
 	gameMode1.setPosition(window.getSize().x/2, window.getSize().y / 3);
@@ -95,7 +122,7 @@ Status Game::displayTitleScreen() const{
 
 	window.display();
 
-	//loop until player decies on a game mode
+	//loop until player decides on a game mode
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -123,8 +150,8 @@ Status Game::displayTitleScreen() const{
 }
 
 sf::Color Game::getCurrentColor() const{
-	if (turn % 2 == 0) return board.getColor1();
-	else               return board.getColor2();
+	if (turn % 2 == 0) return board.getColor2();
+	else               return board.getColor1();
 }
 
 //checks game board and returns current game status (CONTINUE, TIE, WIN)

@@ -91,7 +91,7 @@ void Board::drawBoard() {
 
 //Adds piece of specified color to specified column of board, increments numInColumns, and returns Position filled
 //If specified column of board is already filled, returns Position(-1,-1), does not increment numInColumns
-Position Board::addPiece(int col, sf::Color& color) {
+Position Board::addPiece(int col, const sf::Color& color) {
 	int numInCol = numInColumns[col];
 	if (numInCol == height) return Position(-1, -1);
 	Position p(col, height - numInCol - 1);
