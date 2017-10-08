@@ -5,13 +5,17 @@
 #include "Board.h"
 
 enum Status {
-	CONTINUE,TIE,WIN,PLAYER_V_PLAYER,AI_FIRST,AI_SECOND
+	CONTINUE,TIE,WIN
+};
+
+enum Mode {
+	PLAYER_V_PLAYER, AI_FIRST, AI_SECOND
 };
 
 //contains game loop and all game components/logic
 class Game {
 	public:
-		Game(sf::RenderWindow& window, int numConnected_ = 4, int turn_ = 1);
+		Game(sf::RenderWindow& window, int numConnected_ = 2, int turn_ = 1); //default connect 4 pieces game
 		void run(); //game loop
 	private:
 		int turn; //current turn number
@@ -24,7 +28,7 @@ class Game {
 		sf::SoundBuffer buffer;
 		sf::Sound dropSound;
 
-		Status displayTitleScreen() const;
+		Mode displayTitleScreen() const;
 		sf::Color getCurrentColor() const;
 		Status isGameOver(Position& placed) const;
 		int convertMousePosToColumn(sf::Vector2i& pos) const;

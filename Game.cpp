@@ -7,6 +7,7 @@ Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnect
 																	  window(window_),
 																	  board(window_)
 {
+	numConnected = 3;
 	//setting up graphics for game marker
 	float markerRadius = board.getPieces()[0].getRadius();
 	marker.setRadius(markerRadius);
@@ -22,19 +23,23 @@ void Game::run() {
 	bool playGame = true;
 	//as long as player wants to continue playing game, reset game and keep running
 	while (playGame) {
-		Status gameMode = displayTitleScreen();
+		Mode gameMode = displayTitleScreen();
 		Status gameStatus = CONTINUE;
 		ComputerPlayer ai;
 		
+		//setup AI if not player vs player
+		//if AI moves first gamemode, then let AI take first turn
 		if (gameMode == AI_FIRST) {
-			ai.setColor(board.getColor1());
-			Position placed = ai.makeMove(board);
+			ai.setColors(board.getColor1(), board.getColor2());
+			ai.setNumConnected(numConnected);
+			Position placed = ai.makeMove(board, turn);
 			drawMarker(placed.x);
 			animateDrop(placed);
 			dropSound.play();
 			turn++;
 		} else if (gameMode == AI_SECOND) {
-			ai.setColor(board.getColor2());
+			ai.setColors(board.getColor2(), board.getColor1());
+			ai.setNumConnected(numConnected);
 		}
 
 		//Playing game
@@ -51,6 +56,7 @@ void Game::run() {
 					if (placed.x == -1 || placed.y == -1) break;
 
 					//animate dropping and play sound effect at end
+					drawMarker(placed.x);
 					animateDrop(placed);
 					dropSound.play();
 
@@ -63,9 +69,10 @@ void Game::run() {
 					if (gameStatus != CONTINUE) break;
 				    turn++;
 
+					//run AI turn if gamemode is not player vs player
 					if (gameMode == AI_FIRST || gameMode == AI_SECOND) {
 						sf::sleep(sf::milliseconds(250));
-						Position placed = ai.makeMove(board);
+						Position placed = ai.makeMove(board, turn);
 						drawMarker(placed.x);
 						animateDrop(placed);
 						dropSound.play();
@@ -91,7 +98,7 @@ void Game::run() {
 }
 
 //generates title screen loop and determines if player wishes to play against another player or an AI 
-Status Game::displayTitleScreen() const{
+Mode Game::displayTitleScreen() const{
 	//generate title display text
 	window.clear(board.getBackgroundColor());
 

@@ -1,7 +1,10 @@
 #include "Board.h"
 
 
+
 Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
+	width = 6;
+	height = 5;
 	//Setting up piece graphics to be drawn on window later
 	//Pieces are circular disks of a fixed radius window (1/3) * [pixel width/(number of columns (width) )] 
 	//By default they are set to the background color to represent no piece currently occupying that position on the board
@@ -54,6 +57,11 @@ sf::CircleShape * Board::getPieces() const {
 	return pieces;
 }
 
+int * Board::getNumInColumns() const
+{
+	return numInColumns;
+}
+
 sf::Color Board::getColor1() const{
 	return pieceColor1;
 }
@@ -90,8 +98,11 @@ void Board::drawBoard() {
 
 
 //Adds piece of specified color to specified column of board, increments numInColumns, and returns Position filled
-//If specified column of board is already filled, returns Position(-1,-1), does not increment numInColumns
+//If specified column of board is already filled or is invalid, returns Position(-1,-1), does not increment numInColumns
+//Note: Positions x and y coordinates are the same as a 2D array would be [e.g. top left corner is at (0,0), below is (0,1) and right is (1,0)]
 Position Board::addPiece(int col, const sf::Color& color) {
+	if (col >= width) return Position(-1, -1);
+
 	int numInCol = numInColumns[col];
 	if (numInCol == height) return Position(-1, -1);
 	Position p(col, height - numInCol - 1);
@@ -100,9 +111,25 @@ Position Board::addPiece(int col, const sf::Color& color) {
 	return p;
 }
 
+//removes piece at top of specified column if piece is there and decrements numInColumns
+//If specified column of board is invalid, returns Position(-1,-1) does not decrement numInColumns
+void Board::removePiece(int col) {
+	Position p(col, height - numInColumns[col]);
+	if (!validPosition(p)) return;
+
+	if (pieces[index(p)].getFillColor() != backgroundColor) {
+		pieces[index(p)].setFillColor(backgroundColor);
+		numInColumns[col] -= 1;
+	}
+}
+
 //Converts 2D dimenions into 1D dimensions
 int Board::index(Position& p) const{
 	return p.y * width + p.x;
+}
+
+int Board::index(int x, int y) const {
+	return y * width + x;
 }
 
 //Checks whether 2D dimensions are valid on board

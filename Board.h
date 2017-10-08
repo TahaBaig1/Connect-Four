@@ -8,12 +8,13 @@
 //Connect 4 Game Board -- Includes graphics information of board and pieces alongside storing pieces data
 class Board {
 	public:
-		Board(sf::RenderWindow& window_, int width_ = 7, int height_ = 6);
+		Board(sf::RenderWindow& window_, int width_ = 7, int height_ = 6); //default 7 x 6 board
 		~Board();
 		
 		int getWidth() const;
 		int getHeight() const;
 		sf::CircleShape* getPieces() const;
+		int* getNumInColumns() const;
 		sf::Color getColor1() const;
 		sf::Color getColor2() const;
 		sf::Color getBackgroundColor() const;
@@ -21,7 +22,9 @@ class Board {
 		void drawBoard();
 
 		Position addPiece(int col, const sf::Color& color);
+		void removePiece(int col);
 	    int index(Position& p) const;
+		int index(int x, int y) const;
 		bool validPosition(Position& p) const;
 		void clear();
 	private:
