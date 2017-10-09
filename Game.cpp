@@ -7,7 +7,6 @@ Game::Game(sf::RenderWindow& window_, int numConnected_, int turn_) : numConnect
 																	  window(window_),
 																	  board(window_)
 {
-	numConnected = 3;
 	//setting up graphics for game marker
 	float markerRadius = board.getPieces()[0].getRadius();
 	marker.setRadius(markerRadius);
@@ -26,12 +25,13 @@ void Game::run() {
 		Mode gameMode = displayTitleScreen();
 		Status gameStatus = CONTINUE;
 		ComputerPlayer ai;
+		ai.setNumConnected(numConnected);
+		ai.setDifficulty(4);
 		
 		//setup AI if not player vs player
 		//if AI moves first gamemode, then let AI take first turn
 		if (gameMode == AI_FIRST) {
 			ai.setColors(board.getColor1(), board.getColor2());
-			ai.setNumConnected(numConnected);
 			Position placed = ai.makeMove(board, turn);
 			drawMarker(placed.x);
 			animateDrop(placed);
@@ -39,7 +39,6 @@ void Game::run() {
 			turn++;
 		} else if (gameMode == AI_SECOND) {
 			ai.setColors(board.getColor2(), board.getColor1());
-			ai.setNumConnected(numConnected);
 		}
 
 		//Playing game

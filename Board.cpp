@@ -3,8 +3,6 @@
 
 
 Board::Board(sf::RenderWindow& window_, int width_, int height_) : window(window_), width(width_), height(height_) {
-	width = 6;
-	height = 5;
 	//Setting up piece graphics to be drawn on window later
 	//Pieces are circular disks of a fixed radius window (1/3) * [pixel width/(number of columns (width) )] 
 	//By default they are set to the background color to represent no piece currently occupying that position on the board
@@ -57,16 +55,15 @@ sf::CircleShape * Board::getPieces() const {
 	return pieces;
 }
 
-int * Board::getNumInColumns() const
-{
+int * Board::getNumInColumns() const {
 	return numInColumns;
 }
 
-sf::Color Board::getColor1() const{
+sf::Color Board::getColor1() const {
 	return pieceColor1;
 }
 
-sf::Color Board::getColor2() const{
+sf::Color Board::getColor2() const {
 	return pieceColor2;
 }
 

@@ -1,10 +1,12 @@
 #include "ComputerPlayer.h"
 #include <cstdlib>
-#include <iostream>
 
 ComputerPlayer::ComputerPlayer() {}
 
-ComputerPlayer::ComputerPlayer(sf::Color aiColor, sf::Color opposingColor_, int numConnected_) : color(aiColor), opposingColor(opposingColor_), numConnected(numConnected_){}
+ComputerPlayer::ComputerPlayer(sf::Color aiColor, sf::Color opposingColor_, int numConnected_, int difficulty_ = 4) : color(aiColor), 
+																													  opposingColor(opposingColor_), 
+																													  numConnected(numConnected_),
+																													  difficulty(difficulty_) {}
 
 void ComputerPlayer::setColors(sf::Color aiColor, sf::Color opposingColor_) {
 	this->color = aiColor;
@@ -12,14 +14,14 @@ void ComputerPlayer::setColors(sf::Color aiColor, sf::Color opposingColor_) {
 }
 
 void ComputerPlayer::setNumConnected(int num) {
-	numConnected = num;
+	this->numConnected = num;
 }
 
+void ComputerPlayer::setDifficulty(int difficulty) {
+	this->difficulty = difficulty;
+}
 
 Position ComputerPlayer::makeMove(Board& board, int turn) const {
-	if (turn == 1) {
-		return board.addPiece(0, this->color);
-	}
 	int col = minimax(board);
 	Position placed = board.addPiece(col, this->color);
 	return placed;
@@ -38,7 +40,10 @@ int ComputerPlayer::minimax(Board& board) const{
 	//Initially AI's turn: we want the maximum score possible
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->color);
-		int moveScore = minimize(board, placed, alpha, beta); //AI has added a piece, it is now either terminal state or human's turn (human will minimize)
+
+		//AI has added a piece, it is now either terminal state or human's turn (human will minimize)
+		//the difficulty member of ComputerPlayer will become the depth of search of the maximizing/minimizing functions
+		int moveScore = minimize(board, placed, alpha, beta, this->difficulty); 
 		std::cout << moveScore << " ";
 		if (moveScore > alpha) {
 			alpha = moveScore;
@@ -51,10 +56,11 @@ int ComputerPlayer::minimax(Board& board) const{
 	return moves[bestMoveIndex];
 }
 
-int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta) const{
+int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta, int depth) const{
 	Status gameStatus = isGameOver(board, placed);
-	if (gameStatus == WIN) return 1;
+	if (gameStatus == WIN) return 1000;
 	if (gameStatus == TIE) return 0;
+	if (depth <= 0) return eval(board, this->color);
 
 	std::vector<int> moves;
 	getPossibleMoves(board, moves); //gets possible moves Human can make
@@ -63,21 +69,25 @@ int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta)
 
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->opposingColor);
-		int moveScore = maximize(board, placed, alpha, beta); //Human has added a piece, it now either terminal sate or AI's turn (AI will maximize)
-		if (moveScore < beta) {
+		int moveScore = maximize(board, placed, alpha, beta, depth-1); //Human has added a piece, it now either terminal sate or AI's turn (AI will maximize)
+		if (moveScore < beta) { //this is the minimizing step, so beta's value changes as new best minimums are found
 			beta = moveScore;
 		}
 		board.removePiece(moves[i]);
-		if (beta <= alpha) break;
+
+		//if at any point we find that beta <= alpha, this means that it is assurred that the minimum value for this move is less than./equal the maximum value
+		//then we can continue and break out of the possible next moves as it is known that this move is a worse/equivalent choice 
+		if (beta <= alpha) break; 
 	}
 
 	return beta;
 }
 
-int ComputerPlayer::maximize(Board & board, Position placed, int alpha, int beta) const {
+int ComputerPlayer::maximize(Board & board, Position placed, int alpha, int beta, int depth) const {
 	Status gameStatus = isGameOver(board, placed);
-	if (gameStatus == WIN) return -1;
+	if (gameStatus == WIN) return -1000;
 	if (gameStatus == TIE) return 0;
+	if (depth <= 0) return -1 * eval(board, this->opposingColor);
 
 	std::vector<int> moves;
 	getPossibleMoves(board, moves); //gets possible moves AI can make
@@ -86,11 +96,14 @@ int ComputerPlayer::maximize(Board & board, Position placed, int alpha, int beta
 	
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->color);
-		int moveScore = minimize(board, placed, alpha, beta); //AI has added a piece, it is now either terminal state or human's turn (human will minimize)
+		int moveScore = minimize(board, placed, alpha, beta, depth-1); //AI has added a piece, it is now either terminal state or human's turn (human will minimize)
 		if (moveScore > alpha) {
 			alpha = moveScore;
 		}
 		board.removePiece(moves[i]);
+
+		//if at any point we find that beta <= alpha, this means that it is assurred that the minimum value for this move is less than/equal to the maximum value 
+		//then we can continue and break out of the possible next moves as it is known that this move is a worse/equivalent choice
 		if (beta <= alpha) break;
 	}
 
@@ -199,6 +212,32 @@ Status ComputerPlayer::isGameOver(Board& board, Position& placed) const {
 	return CONTINUE;
 }
 
+//heuristic evaluvation function for non-terminal state boards
+int ComputerPlayer::eval(Board& board, sf::Color color) const {
+
+	int val = 0;
+	sf::CircleShape* pieces = board.getPieces();
+
+	for (int row = 0; row < board.getHeight(); row++) {
+		for (int col = 0; col < board.getWidth(); col++) {
+			//checking if inserting a piece at a specific emtpy index on board results in a win 
+			Position placed(col, row);
+			int index = board.index(placed);
+
+			if (pieces[index].getFillColor() == board.getBackgroundColor()) {
+				pieces[index].setFillColor(color); //temporary insert
+				
+				if (isGameOver(board, placed) == WIN) val++; //checking worth of placement
+
+				pieces[index].setFillColor(board.getBackgroundColor()); //removing temp insert
+			}
+
+		}
+	}
+
+	return val;
+}
+
 
 //makes random move on board
 Position ComputerPlayer::makeRandomMove(Board& board) const {
@@ -213,20 +252,3 @@ Position ComputerPlayer::makeRandomMove(Board& board) const {
 }
 
 
-//convert Board of CircleShapes/pieces from Board object to a simpler, more convenient array of integers (1 for AI piece, -1 for human piece, 0 for no piece)
-//int* ComputerPlayer::convertBoard(Board& board) const {
-//	int* newBoard = new int[board.getHeight() * board.getWidth()];
-//
-//	for (int row = 0; row < board.getHeight(); row++) {
-//		for (int col = 0; col < board.getWidth(); col++) {
-//			int index = board.index(row, col);
-//			sf::CircleShape& temp = board.getPieces()[index];
-//
-//			if (temp.getFillColor() == this->color)						newBoard[index] = 1;
-//			else if (temp.getFillColor() == board.getBackgroundColor()) newBoard[index] = 0;
-//			else                                                        newBoard[index] = -1;
-//		}
-//	}
-//
-//	return newBoard;
-//}

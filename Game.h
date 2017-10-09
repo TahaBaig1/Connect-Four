@@ -15,7 +15,7 @@ enum Mode {
 //contains game loop and all game components/logic
 class Game {
 	public:
-		Game(sf::RenderWindow& window, int numConnected_ = 2, int turn_ = 1); //default connect 4 pieces game
+		Game(sf::RenderWindow& window, int numConnected_ = 4, int turn_ = 1); //default connect 4 pieces game
 		void run(); //game loop
 	private:
 		int turn; //current turn number
