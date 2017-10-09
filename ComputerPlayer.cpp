@@ -44,7 +44,6 @@ int ComputerPlayer::minimax(Board& board) const{
 		//AI has added a piece, it is now either terminal state or human's turn (human will minimize)
 		//the difficulty member of ComputerPlayer will become the depth of search of the maximizing/minimizing functions
 		int moveScore = minimize(board, placed, alpha, beta, this->difficulty); 
-		std::cout << moveScore << " ";
 		if (moveScore > alpha) {
 			alpha = moveScore;
 			bestMoveIndex = i;
@@ -52,7 +51,6 @@ int ComputerPlayer::minimax(Board& board) const{
 		board.removePiece(moves[i]);
 	}
 
-	std::cout << std::endl;
 	return moves[bestMoveIndex];
 }
 
