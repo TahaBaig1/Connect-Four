@@ -1,9 +1,10 @@
 #include "ComputerPlayer.h"
 #include <cstdlib>
+#include <iostream>
 
 ComputerPlayer::ComputerPlayer() {}
 
-ComputerPlayer::ComputerPlayer(sf::Color aiColor, sf::Color opposingColor_, int numConnected_, int difficulty_ = 4) : color(aiColor), 
+ComputerPlayer::ComputerPlayer(sf::Color aiColor, sf::Color opposingColor_, int numConnected_, int difficulty_) : color(aiColor), 
 																													  opposingColor(opposingColor_), 
 																													  numConnected(numConnected_),
 																													  difficulty(difficulty_) {}
@@ -32,44 +33,55 @@ int ComputerPlayer::minimax(Board& board) const{
 	std::vector<int> moves;
 	getPossibleMoves(board, moves); //gets possible moves AI can make
 
-	int bestMoveIndex = 0; //starting position
-
-	int alpha = -1000000; //arbritary large negative number, best choice so far for AI (so maximal choice)
-	int beta = 1000000;   //arbritary large posistive number, best choice so far for human (so minimal choice)
+	int alpha = -1000000; //arbritary large negative number, best choice so far for AI (so maximal choice) (initially set to worst value)
+	int beta = 1000000;   //arbritary large posistive number, best choice so far for human (so minimal choice) (initially set to worst value)
 
 	//Initially AI's turn: we want the maximum score possible
+	
+	std::vector<int> bestEquivalentMoves;
+
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->color);
 
 		//AI has added a piece, it is now either terminal state or human's turn (human will minimize)
 		//the difficulty member of ComputerPlayer will become the depth of search of the maximizing/minimizing functions
 		int moveScore = minimize(board, placed, alpha, beta, this->difficulty); 
+		std::cout << moves[i] << ":" << moveScore << " ";
 		if (moveScore > alpha) {
 			alpha = moveScore;
-			bestMoveIndex = i;
+			bestEquivalentMoves.clear();
+			bestEquivalentMoves.push_back(moves[i]);
+		}
+		else if (moveScore == alpha) {
+			bestEquivalentMoves.push_back(moves[i]);
 		}
 		board.removePiece(moves[i]);
 	}
 
-	return moves[bestMoveIndex];
+	std::cout << std::endl;
+	return bestEquivalentMoves[rand() % bestEquivalentMoves.size()];
 }
 
 int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta, int depth) const{
 	Status gameStatus = isGameOver(board, placed);
-	if (gameStatus == WIN) return 1000;
-	if (gameStatus == TIE) return 0;
+	if (gameStatus == WIN) return 1000 + depth;
+	if (gameStatus == TIE) return 0 + depth;
 	if (depth <= 0) return eval(board, this->color);
 
 	std::vector<int> moves;
 	getPossibleMoves(board, moves); //gets possible moves Human can make
 
 	//Human wants to minimize the score 
+	int bestMoveScore = 1000000; //arbritary large number
 
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->opposingColor);
 		int moveScore = maximize(board, placed, alpha, beta, depth-1); //Human has added a piece, it now either terminal sate or AI's turn (AI will maximize)
 		if (moveScore < beta) { //this is the minimizing step, so beta's value changes as new best minimums are found
 			beta = moveScore;
+		}
+		if (moveScore < bestMoveScore) {
+			bestMoveScore = moveScore;
 		}
 		board.removePiece(moves[i]);
 
@@ -78,25 +90,29 @@ int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta,
 		if (beta <= alpha) break; 
 	}
 
-	return beta;
+	return bestMoveScore;
 }
 
 int ComputerPlayer::maximize(Board & board, Position placed, int alpha, int beta, int depth) const {
 	Status gameStatus = isGameOver(board, placed);
-	if (gameStatus == WIN) return -1000;
-	if (gameStatus == TIE) return 0;
+	if (gameStatus == WIN) return -1000 - depth;
+	if (gameStatus == TIE) return 0 - depth;
 	if (depth <= 0) return -1 * eval(board, this->opposingColor);
 
 	std::vector<int> moves;
 	getPossibleMoves(board, moves); //gets possible moves AI can make
 
 	//AI wants to maximize score
-	
+	int bestMoveScore = -1000000; //arbritary large negative number
+
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->color);
 		int moveScore = minimize(board, placed, alpha, beta, depth-1); //AI has added a piece, it is now either terminal state or human's turn (human will minimize)
 		if (moveScore > alpha) {
 			alpha = moveScore;
+		}
+		if (moveScore > bestMoveScore) {
+			bestMoveScore = moveScore;
 		}
 		board.removePiece(moves[i]);
 
@@ -105,7 +121,7 @@ int ComputerPlayer::maximize(Board & board, Position placed, int alpha, int beta
 		if (beta <= alpha) break;
 	}
 
-	return alpha;
+	return bestMoveScore;
 }
 
 //returns vector filled with all possible moves on board (each 'move' is just  a column number)
@@ -248,5 +264,6 @@ Position ComputerPlayer::makeRandomMove(Board& board) const {
 
 	return placed;
 }
+
 
 

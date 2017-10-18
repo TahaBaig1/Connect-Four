@@ -26,7 +26,7 @@ void Game::run() {
 		Status gameStatus = CONTINUE;
 		ComputerPlayer ai;
 		ai.setNumConnected(numConnected);
-		ai.setDifficulty(4);
+		ai.setDifficulty(5);
 		
 		//setup AI if not player vs player
 		//if AI moves first gamemode, then let AI take first turn
@@ -70,7 +70,6 @@ void Game::run() {
 
 					//run AI turn if gamemode is not player vs player
 					if (gameMode == AI_FIRST || gameMode == AI_SECOND) {
-						sf::sleep(sf::milliseconds(250));
 						Position placed = ai.makeMove(board, turn);
 						drawMarker(placed.x);
 						animateDrop(placed);
