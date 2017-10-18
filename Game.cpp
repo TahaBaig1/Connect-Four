@@ -26,7 +26,7 @@ void Game::run() {
 		Status gameStatus = CONTINUE;
 		ComputerPlayer ai;
 		ai.setNumConnected(numConnected);
-		ai.setDifficulty(5);
+		ai.setDifficulty(4);
 		
 		//setup AI if not player vs player
 		//if AI moves first gamemode, then let AI take first turn

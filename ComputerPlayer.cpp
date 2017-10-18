@@ -1,6 +1,7 @@
 #include "ComputerPlayer.h"
 #include <cstdlib>
 #include <iostream>
+#include <unordered_set>
 
 ComputerPlayer::ComputerPlayer() {}
 
@@ -37,7 +38,8 @@ int ComputerPlayer::minimax(Board& board) const{
 	int beta = 1000000;   //arbritary large posistive number, best choice so far for human (so minimal choice) (initially set to worst value)
 
 	//Initially AI's turn: we want the maximum score possible
-	
+	int bestMoveScore = -1000000; //arbritary large number (best move score so far, initially at worst value)
+
 	std::vector<int> bestEquivalentMoves;
 
 	for (int i = 0; i < moves.size(); i++) {
@@ -47,12 +49,12 @@ int ComputerPlayer::minimax(Board& board) const{
 		//the difficulty member of ComputerPlayer will become the depth of search of the maximizing/minimizing functions
 		int moveScore = minimize(board, placed, alpha, beta, this->difficulty); 
 		std::cout << moves[i] << ":" << moveScore << " ";
-		if (moveScore > alpha) {
-			alpha = moveScore;
+		if (moveScore > bestMoveScore) {
+			bestMoveScore = moveScore;
 			bestEquivalentMoves.clear();
 			bestEquivalentMoves.push_back(moves[i]);
 		}
-		else if (moveScore == alpha) {
+		else if (moveScore == bestMoveScore) {
 			bestEquivalentMoves.push_back(moves[i]);
 		}
 		board.removePiece(moves[i]);
@@ -72,7 +74,7 @@ int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta,
 	getPossibleMoves(board, moves); //gets possible moves Human can make
 
 	//Human wants to minimize the score 
-	int bestMoveScore = 1000000; //arbritary large number
+	int bestMoveScore = 1000000; //arbritary large number (best move score so far, initially at worst value)
 
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->opposingColor);
@@ -103,7 +105,7 @@ int ComputerPlayer::maximize(Board & board, Position placed, int alpha, int beta
 	getPossibleMoves(board, moves); //gets possible moves AI can make
 
 	//AI wants to maximize score
-	int bestMoveScore = -1000000; //arbritary large negative number
+	int bestMoveScore = -1000000; //arbritary large negative number (best move score so far, intially set to worst value)
 
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->color);
@@ -227,29 +229,141 @@ Status ComputerPlayer::isGameOver(Board& board, Position& placed) const {
 }
 
 //heuristic evaluvation function for non-terminal state boards
+//goes through entire board and counts number of (useful) connections in order to assign a heuristic value of current board
+//a useful connection is one that can be expanded (if a 3 in a row is surrounded by opponent pieces or out of bounds, it is not useful)
 int ComputerPlayer::eval(Board& board, sf::Color color) const {
 
 	int val = 0;
 	sf::CircleShape* pieces = board.getPieces();
+	std::unordered_set<int> visited;
 
 	for (int row = 0; row < board.getHeight(); row++) {
 		for (int col = 0; col < board.getWidth(); col++) {
-			//checking if inserting a piece at a specific emtpy index on board results in a win 
-			Position placed(col, row);
-			int index = board.index(placed);
+			Position curr(col, row);
+			if (visited.count(board.index(curr)) > 0) continue; //avoiding double counting number of connections
 
-			if (pieces[index].getFillColor() == board.getBackgroundColor()) {
-				pieces[index].setFillColor(color); //temporary insert
-				
-				if (isGameOver(board, placed) == WIN) val++; //checking worth of placement
+			const sf::CircleShape& current = pieces[board.index(curr)];
+			if (current.getFillColor() == board.getBackgroundColor()) continue; //empty slot, move on
+			if (current.getFillColor() != color) continue; //opponent spot, move on 
 
-				pieces[index].setFillColor(board.getBackgroundColor()); //removing temp insert
+			int connected = 1;
+
+			//horizontal connections:
+
+			//horizontal left
+			Position checkPos = curr;
+			checkPos.x = curr.x - 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.x--;
 			}
+			Position before = checkPos;
 
+			//horizontal right
+			checkPos.x = curr.x + 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.x++;
+			}
+			Position after = checkPos;
+
+			val += getConnectedVal(before, after, connected, board);
+
+			//vertical connections
+			connected = 1;
+			checkPos = curr;
+
+			//vertical down
+			checkPos.y = curr.y + 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.y++;
+			}
+			before = checkPos;
+
+			//vertical up
+			checkPos.y = curr.y - 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.y--;
+			}
+			after = checkPos;
+
+			val += getConnectedVal(before, after, connected, board);
+
+			//bottom left to top right diagonal connections
+			connected = 1;
+			checkPos = curr;
+
+			//diagonally down
+			checkPos.x = curr.x - 1;
+			checkPos.y = curr.y + 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.x--;
+				checkPos.y++;
+			}
+			before = checkPos;
+
+			//diagonally up
+			checkPos.x = curr.x + 1;
+			checkPos.y = curr.y - 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.x++;
+				checkPos.y--;
+			}
+			after = checkPos;
+
+			val += getConnectedVal(before, after, connected, board);
+
+			//top left to bottom right diagonal connections
+			connected = 1;
+			checkPos = curr;
+
+			//diagonally down
+			checkPos.x = curr.x + 1;
+			checkPos.y = curr.y + 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.x++;
+				checkPos.y++;
+			}
+			before = checkPos;
+
+			//diagonally up
+			checkPos.x = curr.x - 1;
+			checkPos.y = curr.y - 1;
+			while (board.validPosition(checkPos) && pieces[board.index(checkPos)].getFillColor() == color) {
+				connected++;
+				visited.insert(board.index(checkPos));
+				checkPos.x--;
+				checkPos.y--;
+			}
+			after = checkPos;
+
+			val += getConnectedVal(before, after, connected, board);
 		}
 	}
 
 	return val;
+}
+
+int ComputerPlayer::getConnectedVal(Position before, Position after, int connected, Board& board) const{
+	//a connection is not useful if both before and after the connection the board is out of bounds or occupied by the opposing color
+	if ( (!board.validPosition(before) || board.getPieces()[board.index(before)].getFillColor() != board.getBackgroundColor()) &&
+		 (!board.validPosition(after) || board.getPieces()[board.index(after)].getFillColor() != board.getBackgroundColor() ) ) {
+		return 0;
+	}
+
+	return connected * connected;
 }
 
 

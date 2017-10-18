@@ -27,7 +27,8 @@ class ComputerPlayer {
 		int maximize(Board & board, Position placed, int alpha, int beta, int depth) const;
 		void getPossibleMoves(Board& board, std::vector<int>& moves) const;
 		Status isGameOver(Board& board, Position& placed) const;
-		int eval(Board& board, sf::Color col) const;
+		int eval(Board& board, sf::Color color) const;
+		int getConnectedVal(Position before, Position after, int connected, Board& board) const;
 		//int* convertBoard(Board& board) const;
 };
 
