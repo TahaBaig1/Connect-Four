@@ -53,6 +53,7 @@ int ComputerPlayer::minimax(Board& board) const{
 			bestMoveScore = moveScore;
 			bestEquivalentMoves.clear();
 			bestEquivalentMoves.push_back(moves[i]);
+			alpha = moveScore;
 		}
 		else if (moveScore == bestMoveScore) {
 			bestEquivalentMoves.push_back(moves[i]);
