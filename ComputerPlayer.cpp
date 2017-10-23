@@ -39,8 +39,7 @@ int ComputerPlayer::minimax(Board& board) const{
 
 	//Initially AI's turn: we want the maximum score possible
 	int bestMoveScore = -1000000; //arbritary large number (best move score so far, initially at worst value)
-
-	std::vector<int> bestEquivalentMoves;
+	int bestMoveIndex = 0; //default value
 
 	for (int i = 0; i < moves.size(); i++) {
 		Position placed = board.addPiece(moves[i], this->color);
@@ -49,20 +48,18 @@ int ComputerPlayer::minimax(Board& board) const{
 		//the difficulty member of ComputerPlayer will become the depth of search of the maximizing/minimizing functions
 		int moveScore = minimize(board, placed, alpha, beta, this->difficulty); 
 		std::cout << moves[i] << ":" << moveScore << " ";
+
 		if (moveScore > bestMoveScore) {
 			bestMoveScore = moveScore;
-			bestEquivalentMoves.clear();
-			bestEquivalentMoves.push_back(moves[i]);
 			alpha = moveScore;
+			bestMoveIndex = i;
 		}
-		else if (moveScore == bestMoveScore) {
-			bestEquivalentMoves.push_back(moves[i]);
-		}
+
 		board.removePiece(moves[i]);
 	}
 
 	std::cout << std::endl;
-	return bestEquivalentMoves[rand() % bestEquivalentMoves.size()];
+	return moves[bestMoveIndex];
 }
 
 int ComputerPlayer::minimize(Board& board, Position placed, int alpha, int beta, int depth) const{
